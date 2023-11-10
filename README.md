@@ -1,41 +1,28 @@
-# Quasar App (avam-frontend)
+# Quasar App (avamProject)
 
-A Quasar Project
+InnClod
 
-## Install the dependencies
+## Instalar las dependencias
+
 ```bash
 yarn
 # or
 npm install
 ```
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
+### Iniciar el proyecto en modo desarrollo
+
 ```bash
 quasar dev
-```
-
-
-### Lint the files
-```bash
-yarn lint
 # or
-npm run lint
+npx quasar dev
 ```
 
+## Usuario para iniciar sesión
 
-### Format the files
-```bash
-yarn format
-# or
-npm run format
 ```
+email: test@test.com
+password: 1234qwerty
 
-
-
-### Build the app for production
-```bash
-quasar build
+Igualmente los datos del login están puestos de manera inicial en el formulario.
 ```
-
-### Customize the configuration
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
