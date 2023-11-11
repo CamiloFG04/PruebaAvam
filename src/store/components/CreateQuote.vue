@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { Client } from '../interfaces/client';
-import { Product } from '../interfaces/product';
-import { useQuoteStore } from 'src/stores/useQuote';
 import useQuote from '../composables/useQuote';
 import { useRouter } from 'vue-router';
+import DialogQuote from './DialogQuote.vue';
+import Swal from 'sweetalert2';
+import useAuth from 'src/auth/composables/useAuth';
 
 interface ClientSelect {
   cliente_id: number;
@@ -14,57 +13,84 @@ interface ProductSelect {
   producto_id: number;
   nombre: string;
 }
-
 interface Props {
   clientesProps: ClientSelect[];
   productosProps: ProductSelect[];
 }
 
 const props = defineProps<Props>();
-const quoteStore = useQuoteStore();
-const { addQuote } = useQuote();
+const {
+  valor,
+  fecha,
+  cliente_id,
+  dataProduct,
+  data,
+  isOpen,
+  areData,
+  onDialog,
+  addQuote,
+} = useQuote();
 const router = useRouter();
-const valor = ref<number | undefined>(0);
-const fecha = ref<string | undefined>('');
-const cliente_id = ref<number | undefined>();
-const producto = ref<number>();
-const cantidad = ref<number | undefined>();
-const valorUnit = ref<number | undefined>(0);
-const valorTotal = ref<number | undefined>(0);
-const onSubmit = () => {
-  const productoJson = [{ id: producto.value, cantidad: cantidad.value }];
-  const data = {
-    cliente_id: cliente_id.value,
-    valor: valor.value,
-    fecha: fecha.value,
-    productos: productoJson,
-  };
-  addQuote(data);
+const { getNewQuotes } = useAuth();
+
+const onSubmit = async () => {
+  isOpen.value = false;
+  if (data.value) {
+    const resp = await addQuote(data.value);
+    if (resp.success) {
+      valor.value = 0;
+      fecha.value = '';
+      cliente_id.value = null;
+      dataProduct.value = [
+        {
+          producto: null,
+          cantidad: 0,
+          valorU: 0,
+          valorT: 0,
+        },
+        {
+          producto: null,
+          cantidad: 0,
+          valorU: 0,
+          valorT: 0,
+        },
+        {
+          producto: null,
+          cantidad: 0,
+          valorU: 0,
+          valorT: 0,
+        },
+        {
+          producto: null,
+          cantidad: 0,
+          valorU: 0,
+          valorT: 0,
+        },
+        {
+          producto: null,
+          cantidad: 0,
+          valorU: 0,
+          valorT: 0,
+        },
+      ];
+      Swal.fire('OK!', 'Cotización guardada correctamente', 'success');
+    } else {
+      Swal.fire('Error', 'Error interno', 'error');
+    }
+  } else {
+    Swal.fire('Error', 'Error interno', 'error');
+  }
 };
 
-watch(producto, () => {
-  const product = quoteStore.products?.find(
-    (pro) => pro.producto_id === producto.value
-  );
-  console.log(valorUnit.value);
-
-  valorUnit.value = product?.precio;
-});
-
-watch(cantidad, () => {
-  const product = quoteStore.products?.find(
-    (pro) => pro.producto_id === producto.value
-  );
-  if (product && cantidad.value) {
-    valorTotal.value = product.precio * cantidad.value;
-  }
-  valor.value = valorTotal.value;
-});
+const goBack = () => {
+  getNewQuotes();
+  router.push({ name: 'cotizaciones' });
+};
 </script>
 
 <template>
   <div class="q-pa-md" style="max-width: 100%">
-    <q-form @submit="onSubmit" class="q-gutter-md">
+    <q-form class="q-gutter-md">
       <div class="row justify-center">
         <div class="col-md-4 q-ma-md">
           <q-select
@@ -81,18 +107,10 @@ watch(cantidad, () => {
             dense
             stack-label
             class="q-mb-sm"
-            :rules="[(val) => !!val || 'Field is required']"
           />
         </div>
         <div class="col-md-4 q-ma-md">
-          <q-input
-            filled
-            v-model="fecha"
-            mask="date"
-            :rules="['date']"
-            use-chips
-            dense
-          >
+          <q-input filled v-model="fecha" mask="date" use-chips dense>
             <template v-slot:append>
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy
@@ -118,10 +136,14 @@ watch(cantidad, () => {
         <div class="col-md-12">
           <q-card class="my-card">
             <q-card-section>
-              <div class="row justify-center">
-                <div class="col-md-2 q-ma-md">
+              <div
+                class="row justify-center"
+                v-for="(item, index) in props.productosProps"
+                :key="item.producto_id"
+              >
+                <div class="col-md-3 q-ma-sm">
                   <q-select
-                    v-model="producto"
+                    v-model="dataProduct[index].producto"
                     :options="props.productosProps"
                     option-value="producto_id"
                     option-label="nombre"
@@ -134,38 +156,36 @@ watch(cantidad, () => {
                     dense
                     stack-label
                     class="q-mb-sm"
-                    :rules="[(val) => !!val || 'Field is required']"
                   />
                 </div>
-                <div class="col-md-2 q-ma-md">
+                <div class="col-md-2 q-ma-sm">
                   <q-input
                     type="number"
                     filled
                     dense
-                    v-model="cantidad"
+                    v-model="dataProduct[index].cantidad"
                     label="Cantidad"
                     placeholder="Cantidad"
                     class="q-mb-sm"
-                    :rules="[(val) => !!val || 'Field is required']"
                   />
                 </div>
-                <div class="col-md-2 q-ma-md">
+                <div class="col-md-1 q-ma-sm">
                   <q-input
                     disable
                     filled
                     dense
-                    v-model="valorUnit"
+                    v-model="dataProduct[index].valorU"
                     label="Valor Unit"
                     placeholder="Valor Unit"
                     class="q-mb-sm"
                   />
                 </div>
-                <div class="col-md-2 q-ma-md">
+                <div class="col-md-2 q-ma-sm">
                   <q-input
                     disable
                     filled
                     dense
-                    v-model="valorTotal"
+                    v-model="dataProduct[index].valorT"
                     label="Valor Total"
                     placeholder="Valor Total"
                     class="q-mb-sm"
@@ -185,18 +205,20 @@ watch(cantidad, () => {
             label="Cotizar"
             type="button"
             color="primary"
-            @click="onSubmit"
+            @click="onDialog"
           />
-          <q-btn
-            label="Volver"
-            type="button"
-            color="info"
-            @click="router.push({ name: 'cotizaciones' })"
-          />
+          <q-btn label="Volver" type="button" color="info" @click="goBack" />
         </div>
       </div>
     </q-form>
   </div>
+  <dialog-quote
+    v-if="areData"
+    :data="data!"
+    :action="onSubmit"
+    :is-open="isOpen"
+    @on-close="isOpen = false"
+  />
 </template>
 
 <style scoped></style>

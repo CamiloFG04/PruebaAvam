@@ -54,6 +54,13 @@ const useAuth = () => {
     return data;
   };
 
+  const getNewQuotes = async () => {
+    if (store.accessToken) {
+      const resp = await getQuotes(store.accessToken);
+      store.quotes = resp.data;
+    }
+  };
+
   const onSubmit = async (email: string, password: string) => {
     try {
       const response = await login(email, password);
@@ -91,6 +98,7 @@ const useAuth = () => {
     // methods
     onSubmit,
     checkAuthentication,
+    getNewQuotes,
   };
 };
 
